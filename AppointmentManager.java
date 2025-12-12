@@ -1,3 +1,4 @@
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.*;
@@ -63,15 +64,64 @@ public class AppointmentManager {
         Label feedback = new Label();
         feedback.setTextFill(Color.LIGHTGREEN);
 
-        // Practitioner list display
-        Label listLabel = new Label("Available Practitioners:");
-        listLabel.setTextFill(Color.GOLD);
-        TextArea practitionerDisplay = new TextArea();
-        practitionerDisplay.setEditable(false);
-        practitionerDisplay.setPrefHeight(150);
+        // Practitioner Table
+        Label tableLabel = new Label("Available Practitioners");
+        tableLabel.setTextFill(Color.GOLD);
+        tableLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-        // Load all practitioners (available/unavailable)
-        practitionerDisplay.setText(getPractitionerList());
+// Table Setup
+        TableView<Practitioner> table = new TableView<>();
+        table.setPrefHeight(200);
+        table.setStyle("-fx-background-color: black; -fx-border-color: gold;");
+
+// Columns
+        TableColumn<Practitioner, String> snCol = new TableColumn<>("S/N");
+        snCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getId()));
+        snCol.setPrefWidth(60);
+
+        TableColumn<Practitioner, String> idCol = new TableColumn<>("Practitioner ID");
+        idCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getId()));
+        idCol.setPrefWidth(130);
+
+        TableColumn<Practitioner, String> nameCol = new TableColumn<>("Full Name");
+        nameCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getName()));
+        nameCol.setPrefWidth(180);
+
+        TableColumn<Practitioner, String> specialtyCol = new TableColumn<>("Specialty");
+        specialtyCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getSpecialty()));
+        specialtyCol.setPrefWidth(150);
+
+        TableColumn<Practitioner, String> availabilityCol = new TableColumn<>("Availability");
+        availabilityCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getAvailability()));
+        availabilityCol.setPrefWidth(120);
+
+// Add columns to table
+        table.getColumns().addAll(snCol, idCol, nameCol, specialtyCol, availabilityCol);
+
+// Load Data From DB
+        ObservableList<Practitioner> data = FXCollections.observableArrayList();
+
+        try (Connection conn = sqlconnector.connect()) {
+            String sql = "SELECT practitioner_id, full_name, specialty, availability FROM practitioner";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            int index = 1;
+            while (rs.next()) {
+                data.add(new Practitioner(
+                        String.valueOf(index++),
+                        rs.getString("practitioner_id"),
+                        rs.getString("full_name"),
+                        rs.getString("specialty"),
+                        rs.getString("availability")
+                ));
+            }
+
+            table.setItems(data);
+
+        } catch (Exception ex) {
+            System.out.println("Error loading practitioners: " + ex.getMessage());
+        }
 
         // Booking action
         bookBtn.setOnAction(e -> {
@@ -105,7 +155,6 @@ public class AppointmentManager {
                     feedback.setTextFill(Color.RED);
                     return;
                 }
-                // ===========================
 
                 if (dateTime.isBefore(LocalDateTime.now())) {
                     feedback.setText("⚠️ You cannot book an appointment in the past.");
@@ -133,7 +182,7 @@ public class AppointmentManager {
 
         VBox layout = new VBox(15,
                 title,
-                listLabel, practitionerDisplay,
+                tableLabel, table,
                 practitionerDropdown, dateField,
                 bookBtn, feedback, backBtn
         );
@@ -145,6 +194,29 @@ public class AppointmentManager {
         stage.setTitle("Book Appointment");
         stage.show();
     }
+    
+    public static class Practitioner {
+    private final String sn;
+    private final String id;
+    private final String name;
+    private final String specialty;
+    private final String availability;
+
+    public Practitioner(String sn, String id, String name, String specialty, String availability) {
+        this.sn = sn;
+        this.id = id;
+        this.name = name;
+        this.specialty = specialty;
+        this.availability = availability;
+    }
+
+    public String getSn() { return sn; }
+    public String getId() { return id; }
+    public String getName() { return name; }
+    public String getSpecialty() { return specialty; }
+    public String getAvailability() { return availability; }
+}
+
 
     // ===============================
     // HELPER: GET PRACTITIONER LIST

@@ -26,4 +26,18 @@ public class sqlconnector {
             return null;
         }
     }
+        // ✅ Public getters for external access
+    public static String getDbUrl() {
+        return dbUrl;
+    }
+
+    public static String getUsername() {
+        return username;
+    }
+
+    public static String getPassword() {
+        return password;
+    }
 }
+
+

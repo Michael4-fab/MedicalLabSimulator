@@ -1,3 +1,4 @@
+
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -12,14 +13,28 @@ import java.sql.*;
 
 public class MainMenu extends Application {
 
+    // Popup used for Test List
+    private Stage testPopup;
+
+    @Override
     public void start(Stage stage) {
 
-        // ===== HEADER =====
-        Label title = new Label("FAB'S MEDICAL LAB");
+        // ====== HEADER ======
+        Label title = new Label("WELCOME TO "
+                + "FAB'S MEDICAL LAB");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 28));
         title.setTextFill(Color.GOLD);
 
-        // ===== BUTTONS =====
+        // ===== TOP RIGHT BUTTON =====
+        Button testListBtn = new Button("🧪 Tests & Prices");
+        testListBtn.setStyle("-fx-background-color: #0d47a1; -fx-text-fill: white; -fx-font-weight: bold;");
+        testListBtn.setOnAction(e -> showTestListPopup());
+
+        HBox topRight = new HBox(testListBtn);
+        topRight.setAlignment(Pos.TOP_RIGHT);
+        topRight.setPadding(new Insets(0, 0, 10, 0));
+
+        // ===== MAIN BUTTONS =====
         Button patientLogin = new Button("Patient Login");
         Button registerPatient = new Button("Register New Patient");
         Button practitionerLogin = new Button("Practitioner Login");
@@ -38,7 +53,7 @@ public class MainMenu extends Application {
         registerPatient.setOnAction(e -> showRegisterPatientDialog(feedback));
 
         // ===== MAIN LAYOUT =====
-        VBox layout = new VBox(15, title, patientLogin, registerPatient, practitionerLogin, feedback);
+        VBox layout = new VBox(15, topRight, title, patientLogin, registerPatient, practitionerLogin, feedback);
         layout.setPadding(new Insets(30));
         layout.setAlignment(Pos.CENTER);
         layout.setStyle("-fx-background-color: black;");
@@ -49,7 +64,7 @@ public class MainMenu extends Application {
     }
 
     // =====================================================
-    //  PATIENT LOGIN + FORGOT PASSWORD FEATURE
+    //  PATIENT LOGIN
     // =====================================================
     private void showPatientLogin(Stage stage, Label feedback) {
         Dialog<ButtonType> dialog = new Dialog<>();
@@ -71,6 +86,7 @@ public class MainMenu extends Application {
                 patientIdField, passwordField, forgotPasswordLink
         );
         form.setPadding(new Insets(10));
+
         dialog.getDialogPane().setContent(form);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
@@ -104,25 +120,26 @@ public class MainMenu extends Application {
     }
 
     // =====================================================
-    //  PRACTITIONER LOGIN (NOW USING SEPARATE PAGE)
+    //  PRACTITIONER LOGIN
     // =====================================================
     private void showPractitionerLogin(Stage stage, Label feedback) {
         try {
-            PractitionerLoginPage loginScreen = new PractitionerLoginPage();
-            loginScreen.show(stage);
+            new PractitionerLoginPage().show(stage);
         } catch (Exception ex) {
             feedback.setText("❌ Error loading Practitioner Login: " + ex.getMessage());
         }
     }
 
     // =====================================================
-    //  REGISTER NEW PATIENT  
-    // =====================================================
+//  REGISTER NEW PATIENT  (UPDATED VERSION)
+// =====================================================
     private void showRegisterPatientDialog(Label feedback) {
+        // Create dialog window
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Register New Patient");
         dialog.getDialogPane().setStyle("-fx-background-color: black;");
 
+        // === Input fields ===
         TextField nameField = new TextField();
         nameField.setPromptText("Full Name");
 
@@ -135,68 +152,80 @@ public class MainMenu extends Application {
         PasswordField passField = new PasswordField();
         passField.setPromptText("Password");
 
-        TextField visiblePassword = new TextField();
-        visiblePassword.setManaged(false);
-        visiblePassword.setVisible(false);
-        visiblePassword.textProperty().bindBidirectional(passField.textProperty());
+        PasswordField confirmPassField = new PasswordField();
+        confirmPassField.setPromptText("Confirm Password");
 
+        // === Password Fields with Eye Icon Toggle ===
+        passField.setPromptText("Password");
+
+        TextField passVisibleField = new TextField();
+        passVisibleField.setManaged(false);
+        passVisibleField.setVisible(false);
+        passVisibleField.setPromptText("Password");
+        passVisibleField.textProperty().bindBidirectional(passField.textProperty());
+
+// Eye toggle button for password
         Button togglePass = new Button("👁️");
         togglePass.setStyle("-fx-background-color: transparent; -fx-text-fill: gold; -fx-font-size: 14;");
         togglePass.setOnAction(e -> {
-            boolean showing = visiblePassword.isVisible();
-            visiblePassword.setVisible(!showing);
-            visiblePassword.setManaged(!showing);
+            boolean showing = passVisibleField.isVisible();
+            passVisibleField.setVisible(!showing);
+            passVisibleField.setManaged(!showing);
             passField.setVisible(showing);
             passField.setManaged(showing);
         });
 
-        HBox passBox = new HBox(passField, visiblePassword, togglePass);
-        passBox.setAlignment(Pos.CENTER_RIGHT);
-        passBox.setSpacing(5);
+// Combine field + toggle into one line
+        HBox passwordBox = new HBox(passField, passVisibleField, togglePass);
+        passwordBox.setAlignment(Pos.CENTER_RIGHT);
+        passwordBox.setSpacing(5);
 
-        PasswordField confirmPassField = new PasswordField();
+// === Confirm Password Field with Eye Icon Toggle ===
         confirmPassField.setPromptText("Confirm Password");
 
-        TextField visibleConfirm = new TextField();
-        visibleConfirm.setManaged(false);
-        visibleConfirm.setVisible(false);
-        visibleConfirm.textProperty().bindBidirectional(confirmPassField.textProperty());
+        TextField confirmVisibleField = new TextField();
+        confirmVisibleField.setManaged(false);
+        confirmVisibleField.setVisible(false);
+        confirmVisibleField.setPromptText("Confirm Password");
+        confirmVisibleField.textProperty().bindBidirectional(confirmPassField.textProperty());
 
         Button toggleConfirm = new Button("👁️");
         toggleConfirm.setStyle("-fx-background-color: transparent; -fx-text-fill: gold; -fx-font-size: 14;");
         toggleConfirm.setOnAction(e -> {
-            boolean showing = visibleConfirm.isVisible();
-            visibleConfirm.setVisible(!showing);
-            visibleConfirm.setManaged(!showing);
+            boolean showing = confirmVisibleField.isVisible();
+            confirmVisibleField.setVisible(!showing);
+            confirmVisibleField.setManaged(!showing);
             confirmPassField.setVisible(showing);
             confirmPassField.setManaged(showing);
         });
 
-        HBox confirmBox = new HBox(confirmPassField, visibleConfirm, toggleConfirm);
+// Combine confirm field + toggle
+        HBox confirmBox = new HBox(confirmPassField, confirmVisibleField, toggleConfirm);
         confirmBox.setAlignment(Pos.CENTER_RIGHT);
         confirmBox.setSpacing(5);
 
+// === Layout (replace old VBox form section with this) ===
         VBox form = new VBox(10,
                 label("Enter New Patient Details:", Color.GOLD, 16, true),
                 nameField, ageField, emailField,
-                passBox, confirmBox
+                passwordBox, confirmBox
         );
         form.setPadding(new Insets(10));
 
         dialog.getDialogPane().setContent(form);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
+        // === On dialog confirmation ===
         dialog.showAndWait().ifPresent(result -> {
             if (result == ButtonType.OK) {
-
                 String name = nameField.getText().trim();
                 String email = emailField.getText().trim();
                 String pass = passField.getText().trim();
                 String confirm = confirmPassField.getText().trim();
                 String ageText = ageField.getText().trim();
 
-                if (name.isEmpty() || email.isEmpty() || pass.isEmpty()
-                        || confirm.isEmpty() || ageText.isEmpty()) {
+                // === Basic field validation ===
+                if (name.isEmpty() || email.isEmpty() || pass.isEmpty() || confirm.isEmpty() || ageText.isEmpty()) {
                     feedback.setText("❌ All fields are required.");
                     feedback.setTextFill(Color.RED);
                     return;
@@ -211,28 +240,38 @@ public class MainMenu extends Application {
                 int age;
                 try {
                     age = Integer.parseInt(ageText);
-                    if (age <= 0) throw new NumberFormatException();
-                } catch (Exception ex) {
-                    feedback.setText("❌ Invalid age.");
+                    if (age <= 0) {
+                        throw new NumberFormatException();
+                    }
+                } catch (NumberFormatException ex) {
+                    feedback.setText("❌ Invalid age. Please enter a valid number.");
                     feedback.setTextFill(Color.RED);
                     return;
                 }
 
                 try (Connection conn = sqlconnector.connect()) {
-
-                    PreparedStatement check = conn.prepareStatement("SELECT email FROM patients WHERE email = ?");
-                    check.setString(1, email);
-                    ResultSet rs = check.executeQuery();
-                    if (rs.next()) {
-                        feedback.setText("❌ Email already registered.");
+                    if (conn == null) {
+                        feedback.setText("❌ Database connection failed.");
                         feedback.setTextFill(Color.RED);
                         return;
                     }
 
+                    // === Prevent duplicate emails ===
+                    PreparedStatement check = conn.prepareStatement("SELECT email FROM patients WHERE email = ?");
+                    check.setString(1, email);
+                    ResultSet rs = check.executeQuery();
+                    if (rs.next()) {
+                        feedback.setText("❌ Email already registered. Try logging in.");
+                        feedback.setTextFill(Color.RED);
+                        return;
+                    }
+
+                    // === Generate unique patient ID ===
                     String newId = generatePatientId(conn);
 
-                    PreparedStatement ps = conn.prepareStatement(
-                            "INSERT INTO patients (patient_id, full_name, age, email, password) VALUES (?, ?, ?, ?, ?)");
+                    // === Insert new record into database ===
+                    String sql = "INSERT INTO patients (patient_id, full_name, age, email, password) VALUES (?, ?, ?, ?, ?)";
+                    PreparedStatement ps = conn.prepareStatement(sql);
                     ps.setString(1, newId);
                     ps.setString(2, name);
                     ps.setInt(3, age);
@@ -240,8 +279,34 @@ public class MainMenu extends Application {
                     ps.setString(5, pass);
                     ps.executeUpdate();
 
-                    feedback.setText("✅ Registered successfully! ID: " + newId);
+                    // === Send confirmation email ===
+                    try {
+                        EmailSender.sendEmail(
+                                email,
+                                "Registration Successful - Fab's Medical Lab System",
+                                "Hello " + name + ",\n\n"
+                                + "🎉 Welcome to our Fab's Medical Lab \n\n"
+                                + "Your unique Patient ID is: " + newId + "\n"
+                                + "Please keep it safe — you’ll need it to log in.\n\n"
+                                + "Best regards,\nFab's Medical Lab Team"
+                        );
+                    } catch (Exception mailEx) {
+                        System.out.println("Email sending failed: " + mailEx.getMessage());
+                    }
+
+                    // === Show confirmation alert ===
+                    Alert success = new Alert(Alert.AlertType.INFORMATION);
+                    success.setTitle("Registration Successful");
+                    success.setHeaderText(null);
+                    success.setContentText("🎉 Registration complete!\n\nYour unique Patient ID is:\n"
+                            + newId + "\n\nKeep it safe — you'll need it to log in.\n\n"
+                            + "A confirmation email has been sent to " + email + ".");
+                    success.getDialogPane().setStyle("-fx-background-color: black;");
+                    ((Label) success.getDialogPane().lookup(".content.label")).setTextFill(Color.GOLD);
+                    success.show();
+
                     feedback.setTextFill(Color.LIGHTGREEN);
+                    feedback.setText("✅ Registered successfully! ID: " + newId);
 
                 } catch (SQLException ex) {
                     feedback.setText("❌ Error: " + ex.getMessage());
@@ -252,127 +317,108 @@ public class MainMenu extends Application {
     }
 
     // =====================================================
-    //  FORGOT PASSWORD → RESET PASSWORD
-    // =====================================================
-    private void showForgotPasswordDialog() {
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Forgot Password");
-        dialog.getDialogPane().setStyle("-fx-background-color: black;");
+//  FORGOT PASSWORD → RESET PASSWORD
+// =====================================================
+   private void showResetPasswordDialog(Connection conn, String email) {
 
-        TextField emailField = new TextField();
-        emailField.setPromptText("Enter your registered email");
+    Dialog<ButtonType> dialog = new Dialog<>();
+    dialog.setTitle("Reset Password");
+    dialog.getDialogPane().setStyle("-fx-background-color: black;");
 
-        VBox form = new VBox(10,
-                label("Enter your email to reset password:", Color.GOLD, 16, true),
-                emailField
-        );
-        form.setPadding(new Insets(10));
+    PasswordField newPass = new PasswordField();
+    newPass.setPromptText("Enter new password");
 
-        dialog.getDialogPane().setContent(form);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+    PasswordField confirmPass = new PasswordField();
+    confirmPass.setPromptText("Confirm new password");
 
-        dialog.showAndWait().ifPresent(result -> {
-            if (result == ButtonType.OK) {
+    VBox form = new VBox(10,
+            label("Reset Password for: " + email, Color.GOLD, 16, true),
+            newPass,
+            confirmPass
+    );
+    form.setPadding(new Insets(10));
 
-                String email = emailField.getText().trim();
+    dialog.getDialogPane().setContent(form);
+    dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
-                try (Connection conn = sqlconnector.connect()) {
+    dialog.showAndWait().ifPresent(result -> {
+        if (result == ButtonType.OK) {
 
-                    PreparedStatement ps = conn.prepareStatement(
-                            "SELECT * FROM patients WHERE email=?");
-                    ps.setString(1, email);
-                    ResultSet rs = ps.executeQuery();
+            String p1 = newPass.getText().trim();
+            String p2 = confirmPass.getText().trim();
 
-                    if (rs.next()) {
-                        showResetPasswordDialog(conn, email);
-                    } else {
-                        alert("Error", "❌ Email not found.", Alert.AlertType.ERROR);
-                    }
-
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+            if (p1.isEmpty() || p2.isEmpty()) {
+                alert("Error", "❌ Please fill all fields.", Alert.AlertType.ERROR);
+                return;
             }
-        });
-    }
 
-    private void showResetPasswordDialog(Connection conn, String email) {
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Reset Password");
-        dialog.getDialogPane().setStyle("-fx-background-color: black;");
-
-        PasswordField newPass = new PasswordField();
-        newPass.setPromptText("Enter new password");
-
-        PasswordField confirmPass = new PasswordField();
-        confirmPass.setPromptText("Confirm new password");
-
-        StackPane newPassPane = createPasswordFieldWithToggle(newPass);
-        StackPane confirmPassPane = createPasswordFieldWithToggle(confirmPass);
-
-        VBox form = new VBox(10,
-                label("Set your new password:", Color.GOLD, 16, true),
-                newPassPane,
-                confirmPassPane
-        );
-        form.setPadding(new Insets(10));
-
-        dialog.getDialogPane().setContent(form);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-        dialog.showAndWait().ifPresent(result -> {
-            if (result == ButtonType.OK) {
-
-                String pass = newPass.getText().trim();
-                String confirm = confirmPass.getText().trim();
-
-                if (pass.isEmpty() || confirm.isEmpty()) {
-                    alert("Error", "❌ All fields are required.", Alert.AlertType.ERROR);
-                    return;
-                }
-
-                if (!pass.equals(confirm)) {
-                    alert("Error", "❌ Passwords do not match.", Alert.AlertType.ERROR);
-                    return;
-                }
-
-                try {
-                    PreparedStatement ps = conn.prepareStatement(
-                            "UPDATE patients SET password=? WHERE email=?");
-                    ps.setString(1, pass);
-                    ps.setString(2, email);
-                    ps.executeUpdate();
-
-                    alert("Success", "✅ Password updated successfully!", Alert.AlertType.INFORMATION);
-
-                } catch (SQLException ex) {
-                    alert("Error", "❌ " + ex.getMessage(), Alert.AlertType.ERROR);
-                }
+            if (!p1.equals(p2)) {
+                alert("Error", "❌ Passwords do not match!", Alert.AlertType.ERROR);
+                return;
             }
-        });
-    }
 
-    private StackPane createPasswordFieldWithToggle(PasswordField passwordField) {
-        TextField visibleField = new TextField();
-        visibleField.setManaged(false);
-        visibleField.setVisible(false);
-        visibleField.textProperty().bindBidirectional(passwordField.textProperty());
+            try {
+                PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE patients SET password=? WHERE email=?");
+                ps.setString(1, p1);
+                ps.setString(2, email);
 
-        Button toggleButton = new Button("👁");
-        toggleButton.setStyle("-fx-background-color: transparent; -fx-text-fill: gold;");
-        toggleButton.setFocusTraversable(false);
+                int updated = ps.executeUpdate();
 
-        toggleButton.setOnAction(e -> {
-            boolean showing = visibleField.isVisible();
-            visibleField.setVisible(!showing);
-            visibleField.setManaged(!showing);
-            passwordField.setVisible(showing);
-            passwordField.setManaged(showing);
-        });
+                if (updated > 0) {
+                    alert("Success", "✅ Password reset successfully!", Alert.AlertType.INFORMATION);
+                } else {
+                    alert("Error", "❌ Failed to reset password.", Alert.AlertType.ERROR);
+                }
 
-        StackPane.setAlignment(toggleButton, Pos.CENTER_RIGHT);
-        return new StackPane(passwordField, visibleField, toggleButton);
-    }
+                conn.close();
+
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    });
+}
+   private void showForgotPasswordDialog() {
+    Dialog<ButtonType> dialog = new Dialog<>();
+    dialog.setTitle("Forgot Password");
+    dialog.getDialogPane().setStyle("-fx-background-color: black;");
+
+    TextField emailField = new TextField();
+    emailField.setPromptText("Enter your registered email");
+
+    VBox form = new VBox(10,
+            label("Enter your email to reset your password:", Color.GOLD, 16, true),
+            emailField
+    );
+    form.setPadding(new Insets(10));
+
+    dialog.getDialogPane().setContent(form);
+    dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+    dialog.showAndWait().ifPresent(result -> {
+        if (result == ButtonType.OK) {
+
+            String email = emailField.getText().trim();
+
+            try (Connection conn = sqlconnector.connect()) {
+
+                PreparedStatement ps = conn.prepareStatement(
+                        "SELECT * FROM patients WHERE email=?");
+                ps.setString(1, email);
+                ResultSet rs = ps.executeQuery();
+
+                if (rs.next()) {
+                    showResetPasswordDialog(conn, email);
+                } else {
+                    alert("Error", "❌ Email not found.", Alert.AlertType.ERROR);
+                }
+
+            } catch (Exception ex) {
+            }
+        }
+    });
+}
 
     private void alert(String title, String msg, Alert.AlertType type) {
         Alert a = new Alert(type);
@@ -384,6 +430,52 @@ public class MainMenu extends Application {
         a.show();
     }
 
+    // =====================================================
+    //  TEST LIST POPUP
+    // =====================================================
+    private void showTestListPopup() {
+
+        testPopup = new Stage();
+        testPopup.setTitle("Lab Test List");
+
+        Label title = new Label("Available Laboratory Tests");
+        title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #cfd8dc;");
+
+        TextArea list = new TextArea();
+        list.setEditable(false);
+        list.setStyle("-fx-control-inner-background: #0d47a1; -fx-text-fill: white; -fx-font-size: 14px;");
+        list.setPrefSize(420, 350);
+
+        list.setText(
+                "🔬 LABORATORY TESTS & PRICES\n\n"
+                + "1. Full Blood Count (FBC) ........... ₦14,700\n"
+                + "2. Malaria Parasite Test ............ ₦15,000\n"
+                + "3. HIV Screening Test ............... ₦19,000\n"
+                + "4. Genotype Test ..................... ₦17,750\n"
+                + "5. Blood Group Test .................. ₦12,300\n"
+                + "6. Urinalysis ........................ ₦11,750\n"
+                + "7. Cholesterol Test .................. ₦16,500\n"
+                + "8. Blood Sugar (BS) ............ ₦14,000\n"
+                + "9. Liver Function Test (LFT) ........ ₦49,000\n"
+                + "10. Kidney Function Test (KFT) ...... ₦55,550\n"
+        );
+
+        Button closeBtn = new Button("Close");
+        closeBtn.setStyle("-fx-background-color: #1565c0; -fx-text-fill: white;");
+        closeBtn.setOnAction(e -> testPopup.close());
+
+        VBox layout = new VBox(15, title, list, closeBtn);
+        layout.setAlignment(Pos.CENTER);
+        layout.setStyle("-fx-background-color: #102027;");
+        layout.setPadding(new Insets(20));
+
+        testPopup.setScene(new Scene(layout, 450, 470));
+        testPopup.show();
+    }
+
+    // =====================================================
+    //  HELPER FUNCTIONS
+    // =====================================================
     private Label label(String text, Color color, int size, boolean bold) {
         Label lbl = new Label(text);
         lbl.setTextFill(color);
@@ -392,20 +484,15 @@ public class MainMenu extends Application {
     }
 
     private String generatePatientId(Connection conn) throws SQLException {
-        String lastId = null;
+        ResultSet rs = conn.prepareStatement(
+                "SELECT patient_id FROM patients ORDER BY patient_id DESC LIMIT 1").executeQuery();
 
-        PreparedStatement ps = conn.prepareStatement(
-                "SELECT patient_id FROM patients ORDER BY patient_id DESC LIMIT 1");
-        ResultSet rs = ps.executeQuery();
-
-        if (rs.next()) lastId = rs.getString("patient_id");
-
-        int nextNum = 1;
-        if (lastId != null && lastId.matches("PATIENT\\d+")) {
-            nextNum = Integer.parseInt(lastId.replace("PATIENT", "")) + 1;
+        if (rs.next()) {
+            String last = rs.getString(1).replace("PATIENT", "");
+            int next = Integer.parseInt(last) + 1;
+            return "PATIENT" + String.format("%03d", next);
         }
-
-        return String.format("PATIENT%03d", nextNum);
+        return "PATIENT001";
     }
 
     public static void main(String[] args) {

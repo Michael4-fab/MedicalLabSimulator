@@ -1,21 +1,22 @@
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.sql.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 public class PatientDashboard {
 
     private final String patientId;  // Logged-in patient’s ID
-    private final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public PatientDashboard(String patientId) {
         this.patientId = patientId;
@@ -55,10 +56,35 @@ public class PatientDashboard {
         feedback.setTextFill(Color.WHITE);
 
         // ===============================
-        // VIEW APPOINTMENTS
+        // VIEW APPOINTMENTS (FANCY TABLE)
         // ===============================
         viewAppointments.setOnAction(e -> {
-            StringBuilder sb = new StringBuilder();
+
+            Stage apptStage = new Stage();
+            apptStage.setTitle("My Appointments");
+
+            TableView<AppointmentRow> table = new TableView<>();
+
+            TableColumn<AppointmentRow, String> colId = new TableColumn<>("Appointment ID");
+            colId.setCellValueFactory(new PropertyValueFactory<>("appointmentId"));
+            colId.setPrefWidth(130);
+
+            TableColumn<AppointmentRow, String> colPract = new TableColumn<>("Practitioner ID");
+            colPract.setCellValueFactory(new PropertyValueFactory<>("practitionerId"));
+            colPract.setPrefWidth(150);
+
+            TableColumn<AppointmentRow, String> colDate = new TableColumn<>("Date & Time");
+            colDate.setCellValueFactory(new PropertyValueFactory<>("dateTime"));
+            colDate.setPrefWidth(200);
+
+            TableColumn<AppointmentRow, String> colStatus = new TableColumn<>("Status");
+            colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+            colStatus.setPrefWidth(120);
+
+            table.getColumns().addAll(colId, colPract, colDate, colStatus);
+
+            ObservableList<AppointmentRow> rows = FXCollections.observableArrayList();
+
             try (Connection conn = sqlconnector.connect()) {
                 String sql = "SELECT * FROM appointment WHERE patient_id=?";
                 PreparedStatement ps = conn.prepareStatement(sql);
@@ -66,25 +92,52 @@ public class PatientDashboard {
                 ResultSet rs = ps.executeQuery();
 
                 while (rs.next()) {
-                    sb.append("Appointment ID: ").append(rs.getInt("appointment_id"))
-                      .append("\nPractitioner ID: ").append(rs.getString("practitioner_id"))
-                      .append("\nDate & Time: ").append(rs.getTimestamp("date_time"))
-                      .append("\nStatus: ").append(rs.getString("status"))
-                      .append("\n-----------------------------\n");
+                    rows.add(new AppointmentRow(
+                            rs.getString("appointment_id"),
+                            rs.getString("practitioner_id"),
+                            rs.getTimestamp("date_time").toString(),
+                            rs.getString("status")
+                    ));
                 }
 
-                if (sb.length() == 0) sb.append("You have no booked appointments.");
+                if (rows.isEmpty()) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setHeaderText("No Appointments");
+                    alert.setContentText("You have no booked appointments.");
+                    alert.show();
+                    return;
+                }
+
             } catch (Exception ex) {
-                sb.append("⚠️ Error: ").append(ex.getMessage());
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setHeaderText("Error Loading Appointments");
+                alert.setContentText(ex.getMessage());
+                alert.show();
+                return;
             }
-            showTextWindow("My Appointment", sb.toString());
+
+            table.setItems(rows);
+
+            Button backBtn = new Button("Back");
+            backBtn.setStyle("-fx-background-color: gold; -fx-text-fill: black; -fx-font-weight: bold;");
+            backBtn.setOnAction(ev -> apptStage.close());
+
+            Label heading = new Label("My Appointments");
+            heading.setTextFill(Color.GOLD);
+            heading.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+            VBox box = new VBox(15, heading, table, backBtn);
+            box.setPadding(new Insets(15));
+            box.setStyle("-fx-background-color: black;");
+
+            apptStage.setScene(new Scene(box, 650, 450));
+            apptStage.show();
         });
 
         // ===============================
         // BOOK APPOINTMENT
         // ===============================
         bookAppointment.setOnAction(e -> {
-            // Open AppointmentManager, passing patientId
             AppointmentManager manager = new AppointmentManager();
             manager.open(stage, patientId);
         });
@@ -102,25 +155,27 @@ public class PatientDashboard {
 
                 while (rs.next()) {
                     sb.append("Amount: ₦").append(rs.getDouble("amount"))
-                      .append("\nDescription: ").append(rs.getString("description"))
-                      .append("\nDate: ").append(rs.getTimestamp("date_created"))
-                      .append("\n-----------------------------\n");
+                            .append("\nDescription: ").append(rs.getString("description"))
+                            .append("\nDate: ").append(rs.getTimestamp("date_created"))
+                            .append("\n-----------------------------\n");
                 }
 
-                if (sb.length() == 0) sb.append("No billing records found.");
+                if (sb.length() == 0) {
+                    sb.append("No billing records found.");
+                }
             } catch (Exception ex) {
-                sb.append("⚠️ Error: " + ex.getMessage());
+                sb.append("Error: " + ex.getMessage());
             }
             showTextWindow("Billing Records", sb.toString());
         });
 
         // ===============================
-        // BACK BUTTON — Return to Main Menu
+        // BACK BUTTON
         // ===============================
         back.setOnAction(e -> new MainMenu().start(stage));
 
         // ===============================
-        // LOGOUT BUTTON
+        // LOGOUT
         // ===============================
         logout.setOnAction(e -> {
             MainMenu menu = new MainMenu();
@@ -141,7 +196,7 @@ public class PatientDashboard {
     }
 
     // ===============================
-    // POPUP TEXT WINDOW FOR INFO DISPLAY
+    // POPUP TEXT WINDOW
     // ===============================
     private void showTextWindow(String title, String content) {
         Stage popup = new Stage();
@@ -159,5 +214,39 @@ public class PatientDashboard {
         popup.setScene(new Scene(layout, 600, 400));
         popup.setTitle(title);
         popup.show();
+    }
+
+    // ===============================
+    // TABLE ROW MODEL CLASS
+    // ===============================
+    public static class AppointmentRow {
+
+        private final String appointmentId;
+        private final String practitionerId;
+        private final String dateTime;
+        private final String status;
+
+        public AppointmentRow(String appointmentId, String practitionerId, String dateTime, String status) {
+            this.appointmentId = appointmentId;
+            this.practitionerId = practitionerId;
+            this.dateTime = dateTime;
+            this.status = status;
+        }
+
+        public String getAppointmentId() {
+            return appointmentId;
+        }
+
+        public String getPractitionerId() {
+            return practitionerId;
+        }
+
+        public String getDateTime() {
+            return dateTime;
+        }
+
+        public String getStatus() {
+            return status;
+        }
     }
 }
