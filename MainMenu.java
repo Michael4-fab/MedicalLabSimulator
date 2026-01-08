@@ -131,7 +131,7 @@ public class MainMenu extends Application {
     }
 
     // =====================================================
-//  REGISTER NEW PATIENT  (UPDATED VERSION)
+//  REGISTER NEW PATIENT  
 // =====================================================
     private void showRegisterPatientDialog(Label feedback) {
         // Create dialog window

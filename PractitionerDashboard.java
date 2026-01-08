@@ -26,7 +26,7 @@ public class PractitionerDashboard {
     }
 
     // =========================
-    // MAIN DASHBOARD (unchanged)
+    // MAIN DASHBOARD
     // =========================
     public void show(Stage stage) {
         Label title = new Label("PRACTITIONER DASHBOARD");
@@ -156,7 +156,7 @@ public class PractitionerDashboard {
     }
 
     // -------------------------
-    // helper DB methods (unchanged)
+    // helper DB methods 
     // -------------------------
     private String getPractitionerName(String id) {
         try (Connection conn = sqlconnector.connect()) {
@@ -213,7 +213,7 @@ public class PractitionerDashboard {
     }
 
     // =========================
-// VIEW ALL PATIENTS  (TABLE VIEW VERSION)
+// VIEW ALL PATIENTS  
 // =========================
     private void showAllPatients() {
 
@@ -271,8 +271,7 @@ public class PractitionerDashboard {
 
         Button back = new Button("Back");
         back.setStyle("-fx-background-color: gold; -fx-text-fill: black;");
-        back.setOnAction(e -> s.close());
-
+        back.setOnAction(e -> s.close());     
         VBox v = new VBox(10, header, table, back);
         v.setPadding(new Insets(10));
         v.setStyle("-fx-background-color: black;");
@@ -314,7 +313,7 @@ public class PractitionerDashboard {
     }
 
     // =========================
-    // CREATE BILLING (unchanged)
+    // CREATE BILLING 
     // =========================
     private void openCreateBilling() {
         Stage s = new Stage();
@@ -454,6 +453,9 @@ public class PractitionerDashboard {
         Button refresh = new Button("Refresh");
         Button actBtn = new Button("Accept / Decline / Reschedule");
         Button back = new Button("Back");
+        Button backBtn = new Button("⬅ Back");
+        backBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: gold;");
+       
 
         refresh.setStyle("-fx-background-color: gold; -fx-text-fill: black;");
         actBtn.setStyle("-fx-background-color: gold; -fx-text-fill: black;");
